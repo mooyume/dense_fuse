@@ -19,9 +19,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 # Parameters
-root = 'D:/DataSet/coco/train2014'
-root_val = 'D:/DataSet/coco/val2014'
-train_path = './train_result/'
+root = 'D:\\DataSet\\test/train2014'
+root_val = 'D:\\DataSet\\test/val2014'
+train_path = './train_result_own/'
 epochs = 4
 batch_size = 2
 device = 'cuda'
@@ -62,8 +62,13 @@ for iteration in range(epochs):
         loss = mse_loss + lambd * ssim_loss
         loss.backward()
         optimizer.step()
+        print(
+            f'{iteration}/{epochs} -index: {index} '
+            f'-mse loss: {mse_loss.item()} '
+            f'-ssim_loss: {ssim_loss.item()} '
+            f'-loss:{loss.item()}')
 
-        if index + 1 % loss_interval == 0:
+        if index % loss_interval == 0:
             print('[%d,%d] -   Train    - MSE: %.10f, SSIM: %.10f' %
                   (iteration, index, mse_loss.item(), ssim_loss.item()))
             mse_train.append(mse_loss.item())
@@ -100,10 +105,18 @@ for iteration in range(epochs):
             plt.subplot(2, 3, 4), plt.semilogy(mse_val), plt.title('mse val')
             plt.subplot(2, 3, 5), plt.semilogy(ssim_val), plt.title('ssim val')
             plt.subplot(2, 3, 6), plt.semilogy(loss_val), plt.title('loss val')
-            plt.show()
+            # plt.show()
             plt.savefig(os.path.join(train_path, 'curve.png'), dpi=90)
 
-        if index + 1 % model_interval == 0:
+        if index % model_interval == 0:
             torch.save({'weight': model.state_dict(), 'epoch': iteration, 'batch_index': index},
-                       os.path.join(train_path, 'model_weight_new.pkl'))
+                       os.path.join(train_path, f'model_weight_{epochs + index}.pkl'))
             print('[%d,%d] - model is saved -' % (iteration, index))
+
+# 循环结束后再保存一次模型
+torch.save({
+    'weight': model.state_dict(),
+    'epoch': epochs
+},
+    os.path.join(train_path, 'model_weight_final.pkl'))
+print(f'final model is saved,model name is model_weight_final.pkl')
